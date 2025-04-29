@@ -13,3 +13,7 @@ __pycache__/
 # Arquivos de configuração locais
 env/
 **env/
+
+# Forçar a inclusão da pasta
+!static/
+!static/images/
