@@ -11,5 +11,5 @@ __pycache__/
 .idea/
 
 # Arquivos de configuração locais
-.env
-*.env
+env/
+**env/
