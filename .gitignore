@@ -13,3 +13,6 @@ __pycache__/
 # Arquivos de configuração locais
 env/
 **env/
+
+# Ignorar arquivos das migrações do alembic
+versions/
