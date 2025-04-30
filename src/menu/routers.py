@@ -3,17 +3,16 @@ from fastapi import APIRouter, File, UploadFile
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
-
 # Imports locais
+from core.database import get_db
 from core.exceptions import APIException
 from core.schemas import SuccessResponse
-from src.menu.crud import (
-    create_item, delete_item, delete_order, get_all_categories,
-    get_all_orders, get_detail_order, get_item_by_id, get_menu,
-    place_order, update_item, update_order, update_order_status
-)
+from src.menu.crud import (create_item, delete_item, delete_order,
+                           get_all_categories, get_all_orders,
+                           get_detail_order, get_item_by_id, get_menu,
+                           place_order, update_item, update_order,
+                           update_order_status)
 from src.menu.schemas import PedidoClienteInput, StatusPedido
-from core.database import get_db
 
 router = APIRouter(
     prefix="/cardapio",

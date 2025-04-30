@@ -9,10 +9,8 @@ from sqlalchemy.sql import func
 
 # Imports locais
 from src.menu.models import ItemModel, PedidoItensModel, PedidoModel
-from src.menu.schemas import (
-    DetalhePedido, MenuItem, PedidoClienteInput,
-    PedidoClienteOutput, StatusPedido
-)
+from src.menu.schemas import (DetalhePedido, MenuItem, PedidoClienteInput,
+                              PedidoClienteOutput, StatusPedido)
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Raiz do projeto
 IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens

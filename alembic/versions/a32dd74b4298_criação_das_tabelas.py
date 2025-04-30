@@ -5,11 +5,12 @@ Revises:
 Create Date: 2025-04-28 22:52:17.819192
 
 """
+# Imports do sistema
 from typing import Sequence, Union
 
+# Imports de terceiros
 from alembic import op
 import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = 'a32dd74b4298'

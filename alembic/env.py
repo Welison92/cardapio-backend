@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
 # Imports locais
-from src.menu.models import ItemModel
 from core.config import settings
 from core.database import Base
+from src.menu.models import ItemModel
 
 load_dotenv(path.join(path.dirname(__file__), '../env/.env'))
 
