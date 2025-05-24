@@ -1,7 +1,6 @@
 # Imports de terceiros
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
@@ -15,11 +14,6 @@ app = FastAPI(
     version="0.0.1"
 )
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Raiz do projeto
-IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
-
-# Certifique-se de que o diretório de imagens existe
-IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 # Monta a pasta 'static' para servir arquivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
