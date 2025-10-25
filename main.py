@@ -15,6 +15,15 @@ app = FastAPI(
 )
 
 
+# Configurar o charset para UTF-8
+@app.middleware("http")
+async def add_charset_to_content_type(request: Request, call_next):
+    response = await call_next(request)
+    if "application/json" in response.headers.get("content-type", ""):
+        response.headers["content-type"] = "application/json; charset=utf-8"
+    return response
+
+
 # Monta a pasta 'static' para servir arquivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -29,6 +38,7 @@ app.add_middleware(
 
 # Rotas/Controles
 app.include_router(cardapio_router)
+
 
 # Redirecionar raiz para docs
 @app.get("/")

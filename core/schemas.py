@@ -21,6 +21,6 @@ class SuccessResponse(BaseModel, Generic[T]):
     status: str = "success"
     data: Optional[Union[T, None, List[T], List[str]]] = None
     message: str = "Requisição bem-sucedida."
-    
+
     class Config:
         from_attributes = True

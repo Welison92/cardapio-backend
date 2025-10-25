@@ -1,5 +1,5 @@
 # Imports de terceiros
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
@@ -178,10 +178,10 @@ async def obter_categorias(
 
 @router.post("/cadastrar_item", status_code=201)
 async def cadastrar_item(
-        nome: str,
-        descricao: str,
-        preco: float,
-        categoria: str,
+        nome: str = Form(...),
+        descricao: str = Form(...),
+        preco: float = Form(...),
+        categoria: str = Form(...),
         arquivo: UploadFile = File(...),
         db: Session = Depends(get_db)
 ):
@@ -251,10 +251,10 @@ async def fazer_pedido(
 @router.put("/atualizar_item/{item_id}", status_code=200)
 async def atualizar_item(
         item_id: int,
-        nome: str = None,
-        descricao: str = None,
-        preco: float = None,
-        categoria: str = None,
+        nome: str = Form(None),
+        descricao: str = Form(None),
+        preco: float = Form(None),
+        categoria: str = Form(None),
         arquivo: UploadFile = File(None),
         db: Session = Depends(get_db)
 ):

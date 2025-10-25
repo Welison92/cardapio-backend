@@ -1,5 +1,4 @@
 # Imports do sistema
-import os
 from collections import Counter
 from pathlib import Path
 
@@ -37,13 +36,13 @@ def get_menu(
     """
     # Verifica se a categoria foi fornecida
     query = db.query(ItemModel)
-    
+
     if categoria:
         # Filtra os itens do cardápio pela categoria
         query = query.filter(
             ItemModel.categoria.ilike(f"%{categoria.lower()}%")
         )
-    
+
     # Aplica paginação
     menu = query.offset(skip).limit(limit).all()
 
@@ -206,7 +205,7 @@ def create_item(
 
     # Constroi o caminho completo do arquivo
     caminho_completo = IMAGES_DIR / novo_nome_arquivo
-    
+
     # Caminho relativo para armazenar no banco
     caminho_relativo = f'/static/images/{novo_nome_arquivo}'
 
@@ -361,7 +360,7 @@ def update_item(
 
         # Constroi o caminho completo do arquivo
         caminho_completo = IMAGES_DIR / novo_nome_arquivo
-        
+
         # Caminho relativo para armazenar no banco
         caminho_relativo = f'/static/images/{novo_nome_arquivo}'
 
@@ -377,13 +376,15 @@ def update_item(
                     caminho_antigo = BASE_DIR / item.url_imagem.lstrip('/')
                 else:
                     caminho_antigo = Path(item.url_imagem)
-                
-                if caminho_antigo.exists() and caminho_antigo != caminho_completo:
+
+                if (caminho_antigo.exists() and
+                        caminho_antigo != caminho_completo):
                     try:
                         caminho_antigo.unlink()
                     except Exception as e:
                         # Log error but don't fail the operation
-                        print(f"Aviso: Não foi possível deletar arquivo antigo: {str(e)}")
+                        print(f"Aviso: Não foi possível deletar "
+                              f"arquivo antigo: {str(e)}")
 
             # Atualiza a URL da imagem no banco de dados
             item.url_imagem = caminho_relativo
@@ -552,7 +553,7 @@ def delete_item(
                 caminho_arquivo = BASE_DIR / item.url_imagem.lstrip('/')
             else:
                 caminho_arquivo = Path(item.url_imagem)
-            
+
             if caminho_arquivo.exists():
                 caminho_arquivo.unlink()
         except Exception as e:

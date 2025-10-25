@@ -19,7 +19,8 @@ async def validate_image_upload(file: UploadFile) -> Tuple[bool, str]:
         file (UploadFile): Arquivo a ser validado.
 
     Returns:
-        Tuple[bool, str]: (True, "") se válido, (False, mensagem_erro) caso contrário.
+        Tuple[bool, str]: (True, "") se válido,
+        (False, mensagem_erro) caso contrário.
 
     Raises:
         HTTPException: Se o arquivo for inválido.
