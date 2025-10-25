@@ -2,9 +2,9 @@
 from sqlalchemy import Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from app.menu.schemas import StatusPedido
 # Imports locais
 from core.database import Base
-from src.menu.schemas import StatusPedido
 
 
 class ItemModel(Base):

@@ -3,19 +3,19 @@ from fastapi import APIRouter, File, UploadFile
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
-# Imports locais
-from core.database import get_db
-from core.exceptions import APIException
-from core.schemas import SuccessResponse
-from src.menu.crud import (create_item, delete_item, delete_order,
+from app.menu.crud import (create_item, delete_item, delete_order,
                            get_all_categories, get_all_orders,
                            get_detail_order, get_item_by_id, get_menu,
                            place_order, update_item, update_order,
                            update_order_status)
-from src.menu.schemas import PedidoClienteInput, StatusPedido
+from app.menu.schemas import PedidoClienteInput, StatusPedido
+# Imports locais
+from core.database import get_db
+from core.exceptions import APIException
+from core.schemas import SuccessResponse
 
 router = APIRouter(
-    prefix="/cardapio",
+    prefix="/v1/cardapio",
     tags=["cardapio"],
     responses={404: {"description": "Not found"}},
 )
@@ -24,6 +24,8 @@ router = APIRouter(
 @router.get("/obter_cardapio")
 async def obter_cardapio(
         categoria: str = None,
+        skip: int = 0,
+        limit: int = 100,
         db: Session = Depends(get_db)
 ):
     """
@@ -31,12 +33,14 @@ async def obter_cardapio(
 
     Args:
         categoria (str): Categoria para filtrar os itens do cardápio.
+        skip (int): Número de registros a pular para paginação (padrão: 0).
+        limit (int): Número máximo de registros a retornar (padrão: 100).
         db (Session): Sessão do banco de dados.
     Returns:
         list: Lista de itens do cardápio.
     """
 
-    cardapio = get_menu(db, categoria)
+    cardapio = get_menu(db, categoria, skip, limit)
 
     if len(cardapio) != 0:
         return SuccessResponse(
@@ -84,15 +88,21 @@ async def obter_item_id(
 
 @router.get("/obter_pedidos")
 async def obter_pedidos(
+        skip: int = 0,
+        limit: int = 100,
         db: Session = Depends(get_db)
 ):
     """
-    Retorna todos os pedidos realizados.
+    Retorna todos os pedidos realizados com paginação.
 
+    Args:
+        skip (int): Número de registros a pular para paginação (padrão: 0).
+        limit (int): Número máximo de registros a retornar (padrão: 100).
+        db (Session): Sessão do banco de dados.
     Returns:
         list: Lista de pedidos realizados.
     """
-    pedidos = get_all_orders(db)
+    pedidos = get_all_orders(db, skip, limit)
 
     if len(pedidos) != 0:
         return SuccessResponse(
@@ -166,7 +176,7 @@ async def obter_categorias(
     )
 
 
-@router.post("/cadastrar_item")
+@router.post("/cadastrar_item", status_code=201)
 async def cadastrar_item(
         nome: str,
         descricao: str,
@@ -204,7 +214,7 @@ async def cadastrar_item(
     )
 
 
-@router.post("/fazer_pedido")
+@router.post("/fazer_pedido", status_code=201)
 async def fazer_pedido(
         pedido: PedidoClienteInput,
         status: StatusPedido,
@@ -238,7 +248,7 @@ async def fazer_pedido(
     )
 
 
-@router.put("/atualizar_item/{item_id}")
+@router.put("/atualizar_item/{item_id}", status_code=200)
 async def atualizar_item(
         item_id: int,
         nome: str = None,
@@ -278,7 +288,7 @@ async def atualizar_item(
     )
 
 
-@router.put("/atualizar_status_pedido/{pedido_id}")
+@router.put("/atualizar_status_pedido/{pedido_id}", status_code=200)
 async def atualizar_status_pedido(
         pedido_id: int,
         status: StatusPedido,
@@ -310,7 +320,7 @@ async def atualizar_status_pedido(
     )
 
 
-@router.put("/atualizar_pedido/{pedido_id}")
+@router.put("/atualizar_pedido/{pedido_id}", status_code=200)
 async def atualizar_pedido(
         pedido_id: int,
         pedido: PedidoClienteInput,
@@ -349,7 +359,7 @@ async def atualizar_pedido(
         )
 
 
-@router.delete("/deletar_item/{item_id}")
+@router.delete("/deletar_item/{item_id}", status_code=200)
 async def deletar_item(item_id: int, db: Session = Depends(get_db)):
     """
     Deleta um item do cardápio.
@@ -377,7 +387,7 @@ async def deletar_item(item_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.delete("/deletar_pedido/{pedido_id}")
+@router.delete("/deletar_pedido/{pedido_id}", status_code=200)
 async def deletar_pedido(
         pedido_id: int,
         db: Session = Depends(get_db)

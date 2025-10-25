@@ -55,8 +55,8 @@ class StatusPedido(str, Enum):
     """
     Enumeração de status do pedido.
     """
-    PENDENTE = "PRE-PEDIDO"
-    PREPARANDO = "PENDENTE"
+    PENDENTE = "PENDENTE"
+    PREPARANDO = "PREPARANDO"
     ENTREGUE = "ENTREGUE"
     CANCELADO = "CANCELADO"
 

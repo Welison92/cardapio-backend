@@ -2,15 +2,15 @@
 from logging.config import fileConfig
 from os import path
 
-# Imports de terceiros
-from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
+# Imports de terceiros
+from alembic import context
+from app.menu.models import ItemModel
 # Imports locais
 from core.config import settings
 from core.database import Base
-from src.menu.models import ItemModel
 
 load_dotenv(path.join(path.dirname(__file__), '../env/.env'))
 

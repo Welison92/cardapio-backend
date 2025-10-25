@@ -2,11 +2,11 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
+from app.menu.routers import router as cardapio_router
 # Imports locais
 from core.exceptions import APIException
-from src.menu.routers import router as cardapio_router
 
 # Inicialização do FastAPI
 app = FastAPI(
@@ -29,6 +29,11 @@ app.add_middleware(
 
 # Rotas/Controles
 app.include_router(cardapio_router)
+
+# Redirecionar raiz para docs
+@app.get("/")
+async def root():
+    return RedirectResponse(url='/docs')
 
 
 # Manipulador de exceções para APIException
