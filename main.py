@@ -27,6 +27,9 @@ async def add_charset_to_content_type(request: Request, call_next):
 # Monta a pasta 'static' para servir arquivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Monta a pasta 'frontend' para servir a aplicação frontend
+app.mount("/frontend", StaticFiles(directory="frontend", html=True), name="frontend")
+
 # Middlewares
 app.add_middleware(
     CORSMiddleware,
@@ -40,10 +43,10 @@ app.add_middleware(
 app.include_router(cardapio_router)
 
 
-# Redirecionar raiz para docs
+# Redirecionar raiz para o frontend
 @app.get("/")
 async def root():
-    return RedirectResponse(url='/docs')
+    return RedirectResponse(url='/frontend/index.html')
 
 
 # Manipulador de exceções para APIException

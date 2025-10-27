@@ -365,11 +365,7 @@ def update_item(
         caminho_relativo = f'/static/images/{novo_nome_arquivo}'
 
         try:
-            # Salva o novo arquivo
-            with open(caminho_completo, "wb+") as objeto_arquivo:
-                objeto_arquivo.write(arquivo.file.read())
-
-            # Deleta o arquivo antigo se existir e for diferente do novo
+            # PRIMEIRO: Deleta o arquivo antigo se existir e for diferente do novo
             if item.url_imagem:
                 # Converte caminho relativo para absoluto se necessário
                 if item.url_imagem.startswith('/static/'):
@@ -377,14 +373,24 @@ def update_item(
                 else:
                     caminho_antigo = Path(item.url_imagem)
 
+                # Se o caminho antigo existe E é diferente do novo, deleta
                 if (caminho_antigo.exists() and
                         caminho_antigo != caminho_completo):
                     try:
                         caminho_antigo.unlink()
                     except Exception as e:
                         # Log error but don't fail the operation
-                        print(f"Aviso: Não foi possível deletar "
-                              f"arquivo antigo: {str(e)}")
+                        pass
+                # Se o arquivo novo vai sobrescrever o antigo (mesmo nome), deleta
+                elif caminho_completo.exists():
+                    try:
+                        caminho_completo.unlink()
+                    except Exception as e:
+                        pass
+
+            # SEGUNDO: Salva o novo arquivo
+            with open(caminho_completo, "wb+") as objeto_arquivo:
+                objeto_arquivo.write(arquivo.file.read())
 
             # Atualiza a URL da imagem no banco de dados
             item.url_imagem = caminho_relativo
@@ -558,7 +564,7 @@ def delete_item(
                 caminho_arquivo.unlink()
         except Exception as e:
             # Log error but don't fail the operation
-            print(f"Aviso: Não foi possível deletar arquivo: {str(e)}")
+            pass
 
     # Deleta o item do banco de dados
     try:
