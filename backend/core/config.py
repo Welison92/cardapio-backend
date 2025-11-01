@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
 # Carregando as variáveis de ambiente do .env
-load_dotenv(os.path.join(os.path.dirname(__file__), '../env/.env'))
+# O arquivo .env está em ../../env/.env (duas pastas acima)
+load_dotenv(os.path.join(os.path.dirname(__file__), '../../env/.env'))
 
 
 class Settings(BaseSettings):
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     )
 
     class Config:
-        env_file = os.path.join(os.path.dirname(__file__), '../env/.env')
+        env_file = os.path.join(os.path.dirname(__file__), '../../env/.env')
         env_file_encoding = 'utf-8'
 
 

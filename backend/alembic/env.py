@@ -1,18 +1,23 @@
 # Imports do sistema
 from logging.config import fileConfig
 from os import path
+import sys
 
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
 # Imports de terceiros
 from alembic import context
+
+# Adicionar o caminho do backend ao sys.path
+sys.path.insert(0, path.join(path.dirname(__file__), '..'))
+
 from app.menu.models import ItemModel
 # Imports locais
 from core.config import settings
 from core.database import Base
 
-load_dotenv(path.join(path.dirname(__file__), '../env/.env'))
+load_dotenv(path.join(path.dirname(__file__), '../../env/.env'))
 
 config = context.config
 

@@ -1,3 +1,10 @@
+# Imports do sistema
+import sys
+from pathlib import Path
+
+# Adicionar o diretório atual ao path ANTES de fazer outras importações
+sys.path.insert(0, str(Path(__file__).parent))
+
 # Imports de terceiros
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -7,6 +14,15 @@ from starlette.responses import JSONResponse, RedirectResponse
 from app.menu.routers import router as cardapio_router
 # Imports locais
 from core.exceptions import APIException
+
+# Obter o diretório raiz do projeto (pai de 'backend')
+PROJECT_ROOT = Path(__file__).parent.parent
+STATIC_DIR = PROJECT_ROOT / "static"
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
+
+# Criar os diretórios se não existirem
+STATIC_DIR.mkdir(exist_ok=True)
+FRONTEND_DIR.mkdir(exist_ok=True)
 
 # Inicialização do FastAPI
 app = FastAPI(
@@ -25,10 +41,10 @@ async def add_charset_to_content_type(request: Request, call_next):
 
 
 # Monta a pasta 'static' para servir arquivos estáticos
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Monta a pasta 'frontend' para servir a aplicação frontend
-app.mount("/frontend", StaticFiles(directory="frontend", html=True), name="frontend")
+app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
 # Middlewares
 app.add_middleware(

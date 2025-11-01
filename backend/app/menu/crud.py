@@ -13,7 +13,7 @@ from app.menu.schemas import (DetalhePedido, MenuItem, PedidoClienteInput,
 # Imports locais
 from core.utils import validate_image_upload
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Raiz do projeto
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent  # Raiz do projeto (../)
 IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
 
 

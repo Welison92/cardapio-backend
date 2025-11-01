@@ -4,7 +4,7 @@ name: cardapio
 services:
   api:
     build: .
-    command: "uvicorn main:app --reload --port=8000 --host=0.0.0.0"
+    command: "uvicorn backend.main:app --reload --port=8000 --host=0.0.0.0"
     volumes:
       - ./:/app
     ports:
