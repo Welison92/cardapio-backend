@@ -2,9 +2,9 @@
 from sqlalchemy import Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from app.menu.schemas import StatusPedido
 # Imports locais
 from core.database import Base
-from src.menu.schemas import StatusPedido
 
 
 class ItemModel(Base):
@@ -48,6 +48,12 @@ class PedidoItensModel(Base):
     __tablename__ = "pedido_itens"
 
     id = Column(Integer, primary_key=True, index=True)
-    pedido_id = Column(Integer, ForeignKey("pedidos.id"), nullable=False)
-    item_id = Column(Integer, ForeignKey("itens.id"), nullable=False)
+    pedido_id = Column(
+        Integer, ForeignKey("pedidos.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    item_id = Column(
+        Integer, ForeignKey("itens.id", ondelete="CASCADE"),
+        nullable=False
+    )
     quantidade = Column(Integer, nullable=False, default=1)

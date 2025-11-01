@@ -4,7 +4,7 @@ name: cardapio
 services:
   api:
     build: .
-    command: "uvicorn main:app --reload --port=8000 --host=0.0.0.0"
+    command: "uvicorn backend.main:app --reload --port=8000 --host=0.0.0.0"
     volumes:
       - ./:/app
     ports:
@@ -23,3 +23,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

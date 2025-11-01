@@ -17,5 +17,9 @@ env/
 # Ignorar arquivos das migrações do alembic
 versions/
 
-# Ignorar arquivos estáticos
-static/
+# Ignorar arquivos estáticos, mas manter a estrutura de diretórios
+static/*
+!static/.gitkeep
+!static/images/
+static/images/*
+!static/images/.gitkeep

@@ -3,41 +3,48 @@ from collections import Counter
 from pathlib import Path
 
 # Imports de terceiros
-from fastapi import File, UploadFile
-from sqlalchemy.orm import Session
+from fastapi import File, HTTPException, UploadFile
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql import func
 
-# Imports locais
-from src.menu.models import ItemModel, PedidoItensModel, PedidoModel
-from src.menu.schemas import (DetalhePedido, MenuItem, PedidoClienteInput,
+from app.menu.models import ItemModel, PedidoItensModel, PedidoModel
+from app.menu.schemas import (DetalhePedido, MenuItem, PedidoClienteInput,
                               PedidoClienteOutput, StatusPedido)
+# Imports locais
+from core.utils import validate_image_upload
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Raiz do projeto
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent  # Raiz do projeto (../)
 IMAGES_DIR = BASE_DIR / "static" / "images"  # Diretório das imagens
 
 
 def get_menu(
         db: Session,
-        categoria: str = None
+        categoria: str = None,
+        skip: int = 0,
+        limit: int = 100
 ):
     """
-    Retorna o cardápio completo ou filtrado por categoria.
+    Retorna o cardápio completo ou filtrado por categoria com paginação.
 
     Args:
         categoria (str): Categoria para filtrar os itens do cardápio.
         db (Session): Sessão do banco de dados.
+        skip (int): Número de registros a pular (padrão: 0).
+        limit (int): Número máximo de registros a retornar (padrão: 100).
     Returns:
         list: Lista de itens do cardápio.
     """
     # Verifica se a categoria foi fornecida
+    query = db.query(ItemModel)
+
     if categoria:
         # Filtra os itens do cardápio pela categoria
-        menu = db.query(ItemModel).filter(
+        query = query.filter(
             ItemModel.categoria.ilike(f"%{categoria.lower()}%")
-        ).all()
-    else:
-        # Retorna todos os itens do cardápio
-        menu = db.query(ItemModel).all()
+        )
+
+    # Aplica paginação
+    menu = query.offset(skip).limit(limit).all()
 
     # Converte os itens do cardápio para o formato desejado
     return [MenuItem(**item.__dict__) for item in menu]
@@ -67,15 +74,19 @@ def get_item_by_id(
     return MenuItem(**item.__dict__)
 
 
-def get_all_orders(db: Session):
+def get_all_orders(db: Session, skip: int = 0, limit: int = 100):
     """
-    Retorna todos os pedidos realizados.
+    Retorna todos os pedidos realizados com paginação.
 
+    Args:
+        db (Session): Sessão do banco de dados.
+        skip (int): Número de registros a pular (padrão: 0).
+        limit (int): Número máximo de registros a retornar (padrão: 100).
     Returns:
         list: Lista de pedidos.
     """
-    # Busca todos os pedidos no banco de dados
-    pedidos = db.query(PedidoModel).all()
+    # Busca todos os pedidos no banco de dados com paginação
+    pedidos = db.query(PedidoModel).offset(skip).limit(limit).all()
 
     return [
         PedidoClienteOutput(
@@ -100,8 +111,10 @@ def get_detail_order(
     Returns:
         DetalhePedido: Detalhes do pedido.
     """
-    # Busca o pedido pelo ID no banco de dados
-    pedido = db.query(PedidoModel).filter(PedidoModel.id == order_id).first()
+    # Busca o pedido pelo ID no banco de dados com eager loading
+    pedido = db.query(PedidoModel).options(
+        joinedload(PedidoModel.itens)
+    ).filter(PedidoModel.id == order_id).first()
 
     # Verifica se o pedido foi encontrado
     if not pedido:
@@ -168,35 +181,70 @@ def create_item(
     Returns:
         MenuItem: Item cadastrado.
     """
+    # Valida o arquivo de imagem
+    try:
+        validate_image_upload(arquivo)
+    except HTTPException as e:
+        raise e
+
     # Certifique-se de que o diretório de imagens existe
-    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao criar diretório de imagens: {str(e)}"
+        )
 
     # Obtém o maior ID existente ou 0 se a tabela estiver vazia
     ultimo_id = db.query(func.max(ItemModel.id)).scalar() or 0
 
     # Evita sobreposição de arquivos com o mesmo nome
-    arquivo.filename = f'{ultimo_id + 1}_{arquivo.filename}'
+    file_extension = Path(arquivo.filename).suffix
+    novo_nome_arquivo = f'{ultimo_id + 1}{file_extension}'
 
     # Constroi o caminho completo do arquivo
-    caminho_arquivo = f'{IMAGES_DIR / arquivo.filename}'
+    caminho_completo = IMAGES_DIR / novo_nome_arquivo
+
+    # Caminho relativo para armazenar no banco
+    caminho_relativo = f'/static/images/{novo_nome_arquivo}'
 
     # Salva o arquivo no diretório de imagens
-    with open(caminho_arquivo, "wb+") as objeto_arquivo:
-        objeto_arquivo.write(arquivo.file.read())
+    try:
+        with open(caminho_completo, "wb+") as objeto_arquivo:
+            objeto_arquivo.write(arquivo.file.read())
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao salvar arquivo: {str(e)}"
+        )
 
     # Cria um novo item
-    novo_item = ItemModel(
-        nome=nome,
-        descricao=descricao,
-        preco=preco,
-        categoria=categoria,
-        url_imagem=caminho_arquivo
-    )
+    try:
+        novo_item = ItemModel(
+            nome=nome,
+            descricao=descricao,
+            preco=preco,
+            categoria=categoria,
+            url_imagem=caminho_relativo
+        )
 
-    # Adiciona o item ao banco de dados
-    db.add(novo_item)
-    db.commit()
-    db.refresh(novo_item)
+        # Adiciona o item ao banco de dados
+        db.add(novo_item)
+        db.commit()
+        db.refresh(novo_item)
+    except Exception as e:
+        db.rollback()
+        # Remove o arquivo salvo em caso de erro no banco
+        if caminho_completo.exists():
+            try:
+                caminho_completo.unlink()
+            except Exception:
+                pass
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao salvar item no banco de dados: {str(e)}"
+        )
 
     return novo_item
 
@@ -299,26 +347,69 @@ def update_item(
         item.categoria = categoria
 
     # Se um novo arquivo for fornecido, atualiza a imagem
-    if arquivo:
+    if arquivo and arquivo.filename:
+        # Valida o arquivo de imagem
+        try:
+            validate_image_upload(arquivo)
+        except HTTPException as e:
+            raise e
+
         # Evita sobreposição de arquivos com o mesmo nome
-        arquivo.filename = f'{item_id}_{arquivo.filename}'
+        file_extension = Path(arquivo.filename).suffix
+        novo_nome_arquivo = f'{item_id}{file_extension}'
 
         # Constroi o caminho completo do arquivo
-        caminho_arquivo = f'{IMAGES_DIR / arquivo.filename}'
+        caminho_completo = IMAGES_DIR / novo_nome_arquivo
 
-        with open(caminho_arquivo, "wb+") as objeto_arquivo:
-            objeto_arquivo.write(arquivo.file.read())
+        # Caminho relativo para armazenar no banco
+        caminho_relativo = f'/static/images/{novo_nome_arquivo}'
 
-        # Deleta o arquivo antigo se existir
-        if Path(item.url_imagem).exists():
-            Path(item.url_imagem).unlink()
+        try:
+            # PRIMEIRO: Deleta o arquivo antigo se existir e for diferente do novo
+            if item.url_imagem:
+                # Converte caminho relativo para absoluto se necessário
+                if item.url_imagem.startswith('/static/'):
+                    caminho_antigo = BASE_DIR / item.url_imagem.lstrip('/')
+                else:
+                    caminho_antigo = Path(item.url_imagem)
 
-        # Atualiza a URL da imagem no banco de dados
-        item.url_imagem = caminho_arquivo
+                # Se o caminho antigo existe E é diferente do novo, deleta
+                if (caminho_antigo.exists() and
+                        caminho_antigo != caminho_completo):
+                    try:
+                        caminho_antigo.unlink()
+                    except Exception as e:
+                        # Log error but don't fail the operation
+                        pass
+                # Se o arquivo novo vai sobrescrever o antigo (mesmo nome), deleta
+                elif caminho_completo.exists():
+                    try:
+                        caminho_completo.unlink()
+                    except Exception as e:
+                        pass
+
+            # SEGUNDO: Salva o novo arquivo
+            with open(caminho_completo, "wb+") as objeto_arquivo:
+                objeto_arquivo.write(arquivo.file.read())
+
+            # Atualiza a URL da imagem no banco de dados
+            item.url_imagem = caminho_relativo
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao atualizar imagem: {str(e)}"
+            )
 
     # Salva as alterações no banco de dados
-    db.commit()
-    db.refresh(item)
+    try:
+        db.commit()
+        db.refresh(item)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao atualizar item no banco de dados: {str(e)}"
+        )
 
     return MenuItem(**item.__dict__)
 
@@ -461,12 +552,30 @@ def delete_item(
         return None
 
     # Deleta o arquivo de imagem associado ao item
-    if item.url_imagem and Path(item.url_imagem).exists():
-        Path(item.url_imagem).unlink()
+    if item.url_imagem:
+        try:
+            # Converte caminho relativo para absoluto se necessário
+            if item.url_imagem.startswith('/static/'):
+                caminho_arquivo = BASE_DIR / item.url_imagem.lstrip('/')
+            else:
+                caminho_arquivo = Path(item.url_imagem)
+
+            if caminho_arquivo.exists():
+                caminho_arquivo.unlink()
+        except Exception as e:
+            # Log error but don't fail the operation
+            pass
 
     # Deleta o item do banco de dados
-    db.delete(item)
-    db.commit()
+    try:
+        db.delete(item)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao deletar item do banco de dados: {str(e)}"
+        )
 
     return db
 
